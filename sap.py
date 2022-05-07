@@ -8,7 +8,7 @@ import click
 
 from log_utils import log4json
 
-# import requests
+import requests
 
 
 DOMAIN = "http://39.96.36.73:9999/"
@@ -23,34 +23,32 @@ if not os.path.exists(BASE_FILE_PATH):
 @click.option("--username", prompt="用户")
 @click.password_option(prompt="密码", confirmation_prompt=False)
 def login_and_get_session_id(username: str, password: str) -> str:
+    requests.post(
+        DOMAIN + "api/tasks"
+    )
     print(username)
     print(password)
     return username + password
 
 
 def get_login_cookie_header(refresh=False) -> dict[str, str]:
-    """获取登录使用的 cookie 请求头"""
+    """
+    获取登录使用的 cookie 请求头
+    查到了就存起来
+    :param refresh: 是否强制刷新
+    """
     file_path = f"{BASE_FILE_PATH}/cookie_header.json"
     header = None
 
     if not refresh:
-        print(1)
         with open(file_path, "w+") as f:
             try:
                 header = json.load(f)
-                print(1, header)
             except Exception:
-                print(1, "exc")
-                log4json(
-                    file_name=file_path,
-                    exc_info=traceback.format_exc(),
-                )
+                log4json(file_name=file_path, exc_info=traceback.format_exc())
 
     if refresh or not header:
-        print(2)
-        session_id = login_and_get_session_id()
-        header = {"Cookie": f"sessionid={session_id}"}
-        print(2, header)
+        header = {"Cookie": f"sessionid={login_and_get_session_id()}"}
         with open(file_path, "w+") as f:
             json.dump(header, f, ensure_ascii=False)
 
@@ -73,3 +71,7 @@ def get_city_date_task_info(
     # })
     # print(r.text)
     # print(r.headers)
+
+
+if __name__ == '__main__':
+    get_login_cookie_header()
